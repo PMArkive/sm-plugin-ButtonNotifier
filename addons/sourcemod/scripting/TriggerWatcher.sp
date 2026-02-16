@@ -68,12 +68,14 @@ public void OnPluginStart()
 	}
 
 	/* CONVARS */
-	g_hCVar_SpamDelay = CreateConVar("sm_TriggerWatcher_block_spam_delay", "5", "Time to wait before notifying the next button press", FCVAR_NONE, true, 1.0, true, 60.0);
+	g_hCVar_SpamDelay = CreateConVar("sm_TriggerWatcher_block_spam_delay", "5", "Time to wait before notifying the next button press (0 = disable spam detection)", FCVAR_NONE, true, 0.0, true, 60.0);
 
 	AutoExecConfig(true);
 
 	/* COOKIES */
-	SetCookieMenuItem(CookieHandler, 0, "TriggerWatcher Settings");
+	char sCookieMenuTitle[64];
+	FormatEx(sCookieMenuTitle, sizeof(sCookieMenuTitle), "%t", "TW_Menu_Cookie");
+	SetCookieMenuItem(CookieHandler, 0, sCookieMenuTitle);
 	g_hCookie_DisplayType = new Cookie("TriggerWatcher_display", "TriggerWatcher display method", CookieAccess_Private);
 
 	/* HOOKS */
@@ -116,6 +118,7 @@ public void Event_RoundStart(Event hEvent, const char[] sName, bool bDontBroadca
 public void OnMapEnd()
 {
 	UnhookEntityOutput("func_button", "OnPressed", ButtonPressed);
+	UnhookEntityOutput("func_rot_button", "OnPressed", ButtonPressed);
 	UnhookEntityOutput("trigger_once", "OnTrigger", TriggerTouched);
 	UnhookEntityOutput("trigger_multiple", "OnStartTouch", TriggerTouched);
 	UnhookEntityOutput("trigger_teleport", "OnStartTouch", TriggerTouched);
@@ -378,7 +381,7 @@ void NotifyButton(int activator, const char[] userid, const char[] entity, bool 
 		if (!ShouldNotifyClient(i))
 			continue;
 
-		NotifyMode mode = isSpam ? g_ClientState[i].triggersDisplay : g_ClientState[i].buttonsDisplay;
+		NotifyMode mode = g_ClientState[i].buttonsDisplay;
 		if (mode == Notify_Console || mode == Notify_Both)
 		{
 			if (isSpam)
